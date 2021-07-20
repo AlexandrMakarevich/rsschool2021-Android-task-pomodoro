@@ -1,10 +1,11 @@
 package by.a_makarevich.pomodoro
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import by.a_makarevich.pomodoro.databinding.ActivityMainBinding
 
-class MainActivity : AppCompatActivity(), StopwatchListener{
+class MainActivity : AppCompatActivity(), StopwatchListener {
 
     private lateinit var binding: ActivityMainBinding
     private val LOG = "MyLog"
@@ -20,12 +21,25 @@ class MainActivity : AppCompatActivity(), StopwatchListener{
 
         binding.recycler.apply {
             adapter = stopwatchAdapter
+
         }
 
+
         binding.addNewStopwatchButton.setOnClickListener {
-            stopwatches.add(Stopwatch(nextId++, 60, true))
-            stopwatchAdapter.submitList(stopwatches.toList())
-        }
+
+            val minutes = binding.editTextMinutes.text.toString()
+
+            if (minutes == "") {
+                Toast.makeText(
+                    this,
+                    "Please, input minutes",
+                    Toast.LENGTH_SHORT
+                ).show()
+
+            } else {
+                stopwatches.add(Stopwatch(nextId++, minutes.toLong() * 1000L * 60L, false))
+                stopwatchAdapter.submitList(stopwatches.toList())
+            }        }
     }
 
     override fun start(id: Int) {
@@ -34,10 +48,6 @@ class MainActivity : AppCompatActivity(), StopwatchListener{
 
     override fun stop(id: Int, currentMs: Long) {
         changeStopwatch(id, currentMs, false)
-    }
-
-    override fun reset(id: Int) {
-        changeStopwatch(id, 0L, true)
     }
 
     override fun delete(id: Int) {
@@ -51,10 +61,12 @@ class MainActivity : AppCompatActivity(), StopwatchListener{
             if (it.id == id) {
                 newTimers.add(Stopwatch(it.id, currentMs ?: it.currentMs, isStarted))
             } else {
-                newTimers.add(it)
+                newTimers.add(Stopwatch(it.id, it.currentMs, false))
             }
         }
-        stopwatchAdapter.submitList(newTimers)
+        stopwatchAdapter.apply {
+            submitList(newTimers)
+        }
         stopwatches.clear()
         stopwatches.addAll(newTimers)
     }

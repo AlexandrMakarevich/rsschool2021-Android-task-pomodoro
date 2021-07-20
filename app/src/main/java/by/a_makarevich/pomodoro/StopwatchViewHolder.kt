@@ -4,7 +4,9 @@ import android.content.res.Resources
 import android.graphics.drawable.AnimationDrawable
 import android.os.CountDownTimer
 import android.util.Log
+import android.widget.Toast
 import androidx.core.view.isInvisible
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import by.a_makarevich.pomodoro.databinding.StopwatchItemBinding
 import kotlinx.coroutines.*
@@ -18,11 +20,10 @@ class StopwatchViewHolder(
     private val LOG = "MyLog"
 
     private var timer: CountDownTimer? = null
-    private var current = 0L  // For CustomView
 
     private var scope = CoroutineScope(Dispatchers.Main)
 
-    private var isReset = false
+    private var globalPeriod = 0L
 
 
     fun bind(stopwatch: Stopwatch) {
@@ -34,15 +35,23 @@ class StopwatchViewHolder(
             stopTimer(stopwatch)
         }
 
+        Log.d(LOG, "bind!!! ${stopwatch.id}")
+
         initButtonsListeners(stopwatch)
 
-        binding.customView.setPeriod(PERIOD_CUSTOM_VIEW)
+        if (globalPeriod == 0L) {
+            globalPeriod = stopwatch.currentMs
+            binding.customView.setPeriod(globalPeriod)
+        }
 
     }
 
 
     private fun initButtonsListeners(stopwatch: Stopwatch) {
+
         binding.startPauseButton.setOnClickListener {
+
+
             if (stopwatch.isStarted) {
                 listener.stop(stopwatch.id, stopwatch.currentMs)
             } else {
@@ -50,22 +59,16 @@ class StopwatchViewHolder(
             }
         }
 
-        binding.restartButton.setOnClickListener {
-            isReset = true
-            listener.reset(stopwatch.id)
-        }
-
         binding.deleteButton.setOnClickListener {
             scope.cancel()
-            listener.delete(stopwatch.id) }
+            listener.delete(stopwatch.id)
+        }
     }
 
 
     private fun startTimer(stopwatch: Stopwatch) {
 
         Log.d(LOG, "fun startTimer")
-
-        //initCustomView(stopwatch)
 
         val drawable = resources.getDrawable(R.drawable.ic_baseline_pause_24)
         binding.startPauseButton.setImageDrawable(drawable)
@@ -82,35 +85,39 @@ class StopwatchViewHolder(
         // start customView
         val scope = CoroutineScope(Dispatchers.Main)
 
-        if (isReset) {
-            this.scope.cancel()
-            stopwatch.currentMs = 0L
-            isReset = false
-        }
-
         scope.launch {
-            while (stopwatch.currentMs < PERIOD_CUSTOM_VIEW * REPEAT) {
-                stopwatch.currentMs += INTERVAL
-                binding.customView.setCurrent(stopwatch.currentMs)
+            while (stopwatch.currentMs > 0) {
+                stopwatch.currentMs -= INTERVAL
+                binding.customView.setCurrent(globalPeriod - stopwatch.currentMs)
                 delay(INTERVAL)
             }
         }
-
         this.scope = scope
     }
 
 
     private fun getCountDownTimer(stopwatch: Stopwatch): CountDownTimer {
-        return object : CountDownTimer(PERIOD, UNIT_TEN_MS) {
-            val interval = UNIT_TEN_MS
+        return object : CountDownTimer(stopwatch.currentMs, UNIT_TEN_MS) {
+
+            var period = stopwatch.currentMs
 
             override fun onTick(millisUntilFinished: Long) {
-                stopwatch.currentMs += interval
-                binding.stopwatchTimer.text = stopwatch.currentMs.displayTime()
+                period -= INTERVAL
+                binding.stopwatchTimer.text = period.displayTime()
+                stopwatch.currentMs = period
             }
 
             override fun onFinish() {
-                binding.stopwatchTimer.text = stopwatch.currentMs.displayTime()
+                binding.startPauseButton.isEnabled = false
+                binding.stopwatchTimer.text = START_TIME
+                binding.blinkingIndicator.isInvisible = true
+                (binding.blinkingIndicator.background as? AnimationDrawable)?.stop()
+                scope.cancel()
+                Toast.makeText(
+                    binding.deleteButton.context,
+                    "Timer № ${stopwatch.id+1}  stoped!!!",
+                    Toast.LENGTH_LONG
+                ).show()
             }
         }
     }
@@ -143,9 +150,7 @@ class StopwatchViewHolder(
         binding.startPauseButton.setImageDrawable(drawable)
 
         timer?.cancel()
-
         scope.cancel()
-
 
         binding.blinkingIndicator.isInvisible = true
         (binding.blinkingIndicator.background as? AnimationDrawable)?.stop()
@@ -155,8 +160,8 @@ class StopwatchViewHolder(
     private companion object {
 
         private const val START_TIME = "00:00:00:00"
-        private const val UNIT_TEN_MS = 10L
-        private const val PERIOD = 1000L * 60L * 60L * 24L // Day
+        private const val UNIT_TEN_MS = 100L
+        //  private const val PERIOD = 1000L * 60L * 60L * 24L // Day
 
         // CustomView
         private const val INTERVAL = 100L
