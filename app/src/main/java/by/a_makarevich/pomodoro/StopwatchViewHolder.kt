@@ -108,11 +108,19 @@ class StopwatchViewHolder(
             }
 
             override fun onFinish() {
-                binding.startPauseButton.isEnabled = false
+
                 binding.stopwatchTimer.text = START_TIME
+
                 binding.blinkingIndicator.isInvisible = true
                 (binding.blinkingIndicator.background as? AnimationDrawable)?.stop()
+                
                 scope.cancel()
+
+                stopwatch.isStarted = false
+                val drawable = resources.getDrawable(R.drawable.ic_baseline_cancel_24)
+                binding.startPauseButton.setImageDrawable(drawable)
+                binding.startPauseButton.isEnabled = false
+
                 Toast.makeText(
                     binding.deleteButton.context,
                     "Timer № ${stopwatch.id+1}  stoped!!!",
@@ -122,25 +130,6 @@ class StopwatchViewHolder(
         }
     }
 
-    private fun Long.displayTime(): String {
-        if (this <= 0L) {
-            return START_TIME
-        }
-        val h = this / 1000 / 3600
-        val m = this / 1000 % 3600 / 60
-        val s = this / 1000 % 60
-        val ms = this % 1000 / 10
-
-        return "${displaySlot(h)}:${displaySlot(m)}:${displaySlot(s)}:${displaySlot(ms)}"
-    }
-
-    private fun displaySlot(count: Long): String {
-        return if (count / 10L > 0) {
-            "$count"
-        } else {
-            "0$count"
-        }
-    }
 
     private fun stopTimer(stopwatch: Stopwatch) {
 
@@ -159,7 +148,7 @@ class StopwatchViewHolder(
 
     private companion object {
 
-        private const val START_TIME = "00:00:00:00"
+
         private const val UNIT_TEN_MS = 100L
         //  private const val PERIOD = 1000L * 60L * 60L * 24L // Day
 
