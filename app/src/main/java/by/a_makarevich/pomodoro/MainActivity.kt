@@ -20,22 +20,45 @@ class MainActivity : AppCompatActivity(), LifecycleObserver, StopwatchListener {
     private val stopwatches = mutableListOf<Stopwatch>()
     private var nextId = 0
 
-    var startTimeForService = 0L
+    private var startTimeForService = 0L
+
+    override fun onStop() {
+        Log.d(LOG, "override fun onStop()")
+        super.onStop()
+    }
+
+    override fun onDestroy() {
+        Log.d(LOG, "override fun onDestroy()")
+        super.onDestroy()
+    }
+
+    override fun onPause() {
+        Log.d(LOG, "override fun onPause()")
+        super.onPause()
+    }
+
+    override fun onStart() {
+        Log.d(LOG, "override fun onStart()")
+        super.onStart()
+    }
+
+    override fun onResume() {
+        Log.d(LOG, "override fun onResume()")
+        super.onResume()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d(LOG, "override fun onCreate")
 
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-
-
         binding.recycler.apply {
             adapter = stopwatchAdapter
         }
-
 
         binding.addNewStopwatchButton.setOnClickListener {
 

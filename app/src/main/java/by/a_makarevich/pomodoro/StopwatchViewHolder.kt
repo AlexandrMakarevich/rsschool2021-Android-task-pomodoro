@@ -1,12 +1,11 @@
 package by.a_makarevich.pomodoro
 
-import android.content.res.Resources
 import android.graphics.drawable.AnimationDrawable
 import android.os.CountDownTimer
 import android.util.Log
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.core.view.isInvisible
-import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import by.a_makarevich.pomodoro.databinding.StopwatchItemBinding
 import kotlinx.coroutines.*
@@ -14,7 +13,7 @@ import kotlinx.coroutines.*
 class StopwatchViewHolder(
     private val binding: StopwatchItemBinding,
     private val listener: StopwatchListener,
-    private val resources: Resources
+    //private val resources: Resources
 ) : RecyclerView.ViewHolder(binding.root) {
 
     private val LOG = "MyLog"
@@ -70,7 +69,14 @@ class StopwatchViewHolder(
 
         Log.d(LOG, "fun startTimer")
 
-        val drawable = resources.getDrawable(R.drawable.ic_baseline_pause_24)
+        // deprecated val drawable = resources.getDrawable(R.drawable.ic_baseline_pause_24)
+        val drawable = binding.root.let {
+            ContextCompat.getDrawable(
+                it.context,
+                R.drawable.ic_baseline_pause_24
+            )
+        }
+
         binding.startPauseButton.setImageDrawable(drawable)
 
         timer?.cancel()
@@ -86,9 +92,14 @@ class StopwatchViewHolder(
         val scope = CoroutineScope(Dispatchers.Main)
 
         scope.launch {
-            while (stopwatch.currentMs > 0) {
+            while (stopwatch.currentMs >= 0) {
+
+                var temp = globalPeriod - stopwatch.currentMs
+                if (temp < 0L) temp = 0
+
+                binding.customView.setCurrent(temp)
                 stopwatch.currentMs -= INTERVAL
-                binding.customView.setCurrent(globalPeriod - stopwatch.currentMs)
+
                 delay(INTERVAL)
             }
         }
@@ -97,33 +108,45 @@ class StopwatchViewHolder(
 
 
     private fun getCountDownTimer(stopwatch: Stopwatch): CountDownTimer {
-        return object : CountDownTimer(stopwatch.currentMs, UNIT_TEN_MS) {
+        return object : CountDownTimer(stopwatch.currentMs, INTERVAL) {
 
             var period = stopwatch.currentMs
 
             override fun onTick(millisUntilFinished: Long) {
-                period -= INTERVAL
                 binding.stopwatchTimer.text = period.displayTime()
+                period -= INTERVAL
                 stopwatch.currentMs = period
             }
 
             override fun onFinish() {
 
-                binding.stopwatchTimer.text = START_TIME
+                stopwatch.currentMs = 0L
+
+                binding.stopwatchTimer.text = stopwatch.currentMs.displayTime()
 
                 binding.blinkingIndicator.isInvisible = true
                 (binding.blinkingIndicator.background as? AnimationDrawable)?.stop()
-                
+
+                binding.customView.setCurrent(0L)
+
+
                 scope.cancel()
 
                 stopwatch.isStarted = false
-                val drawable = resources.getDrawable(R.drawable.ic_baseline_cancel_24)
+                // deprecated val drawable = resources.getDrawable(R.drawable.ic_baseline_cancel_24)
+                val drawable = binding.root.let {
+                    ContextCompat.getDrawable(
+                        it.context,
+                        R.drawable.ic_baseline_cancel_24
+                    )
+                }
+
                 binding.startPauseButton.setImageDrawable(drawable)
                 binding.startPauseButton.isEnabled = false
 
                 Toast.makeText(
                     binding.deleteButton.context,
-                    "Timer № ${stopwatch.id+1}  stoped!!!",
+                    "Timer № ${stopwatch.id + 1}  stoped!!!",
                     Toast.LENGTH_LONG
                 ).show()
             }
@@ -135,7 +158,14 @@ class StopwatchViewHolder(
 
         Log.d(LOG, "fun stopTimer")
 
-        val drawable = resources.getDrawable(R.drawable.ic_baseline_play_arrow_24)
+        // deprecated val drawable = resources.getDrawable(R.drawable.ic_baseline_play_arrow_24)
+        val drawable = binding.root.let {
+            ContextCompat.getDrawable(
+                it.context,
+                R.drawable.ic_baseline_play_arrow_24
+            )
+        }
+
         binding.startPauseButton.setImageDrawable(drawable)
 
         timer?.cancel()

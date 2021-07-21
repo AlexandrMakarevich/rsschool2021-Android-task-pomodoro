@@ -86,6 +86,9 @@ class ForegroundService : Service() {
                 )
                 count -= INTERVAL
                 delay(INTERVAL)
+                if (count <= 0L) {
+                    commandStop()
+                }
             }
         }
     }
