@@ -57,23 +57,39 @@ class MainActivity : AppCompatActivity(), LifecycleObserver, StopwatchListener {
         setContentView(binding.root)
 
         binding.recycler.apply {
+
             adapter = stopwatchAdapter
         }
 
         binding.addNewStopwatchButton.setOnClickListener {
 
-            val minutes = binding.editTextMinutes.text.toString()
+            when (val minutes = binding.editTextMinutes.text.toString()) {
+                "" -> {
+                    Toast.makeText(
+                        this,
+                        "Please, input minutes",
+                        Toast.LENGTH_SHORT
+                    ).show()
 
-            if (minutes == "") {
-                Toast.makeText(
-                    this,
-                    "Please, input minutes",
-                    Toast.LENGTH_SHORT
-                ).show()
-
-            } else {
-                stopwatches.add(Stopwatch(nextId++, minutes.toLong() * 1000L * 60L, false))
-                stopwatchAdapter.submitList(stopwatches.toList())
+                }
+                "0" -> {
+                    Toast.makeText(
+                        this,
+                        "Please, input more, than 0",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+                else -> {
+                    stopwatches.add(
+                        Stopwatch(
+                            nextId++,
+                            minutes.toLong() * 1000L * 60L,
+                            minutes.toLong() * 1000L * 60L,
+                            false
+                        )
+                    )
+                    stopwatchAdapter.submitList(stopwatches.toList())
+                }
             }
         }
     }
@@ -81,8 +97,6 @@ class MainActivity : AppCompatActivity(), LifecycleObserver, StopwatchListener {
     @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
     fun onAppBackgrounded() {
         Log.d(LOG, "@OnLifecycleEvent(Lifecycle.Event.ON_STOP)")
-
-
 
         stopwatches.forEach {
             if (it.isStarted) {
@@ -123,9 +137,9 @@ class MainActivity : AppCompatActivity(), LifecycleObserver, StopwatchListener {
         val newTimers = mutableListOf<Stopwatch>()
         stopwatches.forEach {
             if (it.id == id) {
-                newTimers.add(Stopwatch(it.id, currentMs ?: it.currentMs, isStarted))
+                newTimers.add(Stopwatch(it.id, currentMs ?: it.currentMs, it.maxMs, isStarted))
             } else {
-                newTimers.add(Stopwatch(it.id, it.currentMs, false))
+                newTimers.add(Stopwatch(it.id, it.currentMs, it.maxMs, false))
             }
         }
         stopwatchAdapter.apply {

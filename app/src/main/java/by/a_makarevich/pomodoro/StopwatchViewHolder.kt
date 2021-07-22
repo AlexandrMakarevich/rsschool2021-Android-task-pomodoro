@@ -22,8 +22,6 @@ class StopwatchViewHolder(
 
     private var scope = CoroutineScope(Dispatchers.Main)
 
-    private var globalPeriod = 0L
-
 
     fun bind(stopwatch: Stopwatch) {
         binding.stopwatchTimer.text = stopwatch.currentMs.displayTime()
@@ -38,13 +36,10 @@ class StopwatchViewHolder(
 
         initButtonsListeners(stopwatch)
 
-        if (globalPeriod == 0L) {
-            globalPeriod = stopwatch.currentMs
-            binding.customView.setPeriod(globalPeriod)
-        }
+        binding.customView.setPeriod(stopwatch.maxMs)
+        binding.customView.setCurrent(stopwatch.maxMs - stopwatch.currentMs)
 
     }
-
 
     private fun initButtonsListeners(stopwatch: Stopwatch) {
 
@@ -94,12 +89,11 @@ class StopwatchViewHolder(
         scope.launch {
             while (stopwatch.currentMs >= 0) {
 
-                var temp = globalPeriod - stopwatch.currentMs
+                var temp = stopwatch.maxMs - stopwatch.currentMs
                 if (temp < 0L) temp = 0
+                Log.d(LOG, "scope.launch ${scope.coroutineContext}")
 
                 binding.customView.setCurrent(temp)
-                stopwatch.currentMs -= INTERVAL
-
                 delay(INTERVAL)
             }
         }
@@ -110,12 +104,9 @@ class StopwatchViewHolder(
     private fun getCountDownTimer(stopwatch: Stopwatch): CountDownTimer {
         return object : CountDownTimer(stopwatch.currentMs, INTERVAL) {
 
-            var period = stopwatch.currentMs
-
             override fun onTick(millisUntilFinished: Long) {
-                binding.stopwatchTimer.text = period.displayTime()
-                period -= INTERVAL
-                stopwatch.currentMs = period
+                binding.stopwatchTimer.text = stopwatch.currentMs.displayTime()
+                stopwatch.currentMs -= INTERVAL
             }
 
             override fun onFinish() {
@@ -128,7 +119,6 @@ class StopwatchViewHolder(
                 (binding.blinkingIndicator.background as? AnimationDrawable)?.stop()
 
                 binding.customView.setCurrent(0L)
-
 
                 scope.cancel()
 
@@ -165,7 +155,6 @@ class StopwatchViewHolder(
                 R.drawable.ic_baseline_play_arrow_24
             )
         }
-
         binding.startPauseButton.setImageDrawable(drawable)
 
         timer?.cancel()
