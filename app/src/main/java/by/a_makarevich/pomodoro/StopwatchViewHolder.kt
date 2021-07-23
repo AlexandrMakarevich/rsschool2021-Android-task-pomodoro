@@ -22,6 +22,8 @@ class StopwatchViewHolder(
 
     private var scope = CoroutineScope(Dispatchers.Main)
 
+    private var buttonStartPause = binding.startPauseButton
+
 
     fun bind(stopwatch: Stopwatch) {
         binding.stopwatchTimer.text = stopwatch.currentMs.displayTime()
@@ -38,6 +40,17 @@ class StopwatchViewHolder(
 
         binding.customView.setPeriod(stopwatch.maxMs)
         binding.customView.setCurrent(stopwatch.maxMs - stopwatch.currentMs)
+
+        if (stopwatch.isFinished) {
+            val drawable = binding.root.let {
+                ContextCompat.getDrawable(
+                    it.context,
+                    R.drawable.ic_baseline_cancel_24
+                )
+            }
+            buttonStartPause.setImageDrawable(drawable)
+            buttonStartPause.isEnabled = false
+        } else buttonStartPause.isEnabled = true
 
     }
 
@@ -72,7 +85,7 @@ class StopwatchViewHolder(
             )
         }
 
-        binding.startPauseButton.setImageDrawable(drawable)
+        buttonStartPause.setImageDrawable(drawable)
 
         timer?.cancel()
         timer = getCountDownTimer(stopwatch)
@@ -111,6 +124,7 @@ class StopwatchViewHolder(
 
             override fun onFinish() {
 
+                stopwatch.isFinished = true
                 stopwatch.currentMs = 0L
 
                 binding.stopwatchTimer.text = stopwatch.currentMs.displayTime()
@@ -131,8 +145,8 @@ class StopwatchViewHolder(
                     )
                 }
 
-                binding.startPauseButton.setImageDrawable(drawable)
-                binding.startPauseButton.isEnabled = false
+                buttonStartPause.setImageDrawable(drawable)
+                buttonStartPause.isEnabled = false
 
                 Toast.makeText(
                     binding.deleteButton.context,
@@ -155,7 +169,7 @@ class StopwatchViewHolder(
                 R.drawable.ic_baseline_play_arrow_24
             )
         }
-        binding.startPauseButton.setImageDrawable(drawable)
+        buttonStartPause.setImageDrawable(drawable)
 
         timer?.cancel()
         scope.cancel()
