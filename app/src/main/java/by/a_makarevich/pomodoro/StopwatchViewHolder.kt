@@ -104,7 +104,7 @@ class StopwatchViewHolder(
 
                 var temp = stopwatch.maxMs - stopwatch.currentMs
                 if (temp < 0L) temp = 0
-                Log.d(LOG, "scope.launch ${scope.coroutineContext}")
+                    // Log.d(LOG, "scope.launch ${scope.coroutineContext}")
 
                 binding.customView.setCurrent(temp)
                 delay(INTERVAL)
@@ -120,6 +120,8 @@ class StopwatchViewHolder(
             override fun onTick(millisUntilFinished: Long) {
                 binding.stopwatchTimer.text = stopwatch.currentMs.displayTime()
                 stopwatch.currentMs -= INTERVAL
+
+              //  Log.d(LOG, "${millisUntilFinished.displayTime()}")
             }
 
             override fun onFinish() {
